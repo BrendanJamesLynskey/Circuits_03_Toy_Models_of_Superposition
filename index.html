@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circuits 03 — Toy Models of Superposition</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-card: #0d1117;
+            --bg-code: #161b22;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent: #76B900;
+            --accent-dim: #76B90044;
+            --accent-glow: #76B90033;
+            --border: #21262d;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --font-body: 'Inter', sans-serif;
+            --max-width: 900px;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 17px;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .hero > * { position: relative; z-index: 1; }
+        .series-label {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--accent);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+        .hero h1 {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+        .hero h1 .accent { color: var(--accent); }
+        .hero .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 640px;
+            margin-bottom: 2rem;
+        }
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2.5rem;
+        }
+        .tag {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+            white-space: nowrap;
+        }
+        .pipeline {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            margin-bottom: 1rem;
+            max-width: var(--max-width);
+        }
+        .pipeline-step {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            padding: 0.3rem 0.7rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        .pipeline-arrow { color: var(--accent); font-size: 0.9rem; font-weight: 700; }
+        .slide {
+            min-height: 100vh;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 4rem 1.5rem;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .slide-number {
+            font-family: var(--font-display);
+            font-size: 5rem;
+            font-weight: 700;
+            color: var(--accent-dim);
+            position: absolute;
+            top: 2rem;
+            right: 1.5rem;
+            line-height: 1;
+            user-select: none;
+        }
+        .slide h2 {
+            font-family: var(--font-display);
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            line-height: 1.25;
+        }
+        .slide h3 {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .slide p { margin-bottom: 1rem; color: var(--text-secondary); }
+        .slide p strong { color: var(--text-primary); }
+        .slide ul, .slide ol { margin-bottom: 1rem; padding-left: 1.5rem; color: var(--text-secondary); }
+        .slide li { margin-bottom: 0.4rem; }
+        .slide li strong { color: var(--text-primary); }
+        .slide code {
+            font-family: var(--font-mono);
+            font-size: 0.88em;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            padding: 0.05rem 0.35rem;
+            border-radius: 3px;
+            color: #c9d1d9;
+        }
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin: 1.25rem 0;
+            overflow: hidden;
+        }
+        .code-header {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--accent);
+            background: rgba(118, 185, 0, 0.08);
+            padding: 0.4rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .code-block pre { margin: 0; padding: 1rem; overflow-x: auto; }
+        .code-block code {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #c9d1d9;
+            background: transparent;
+            border: none;
+            padding: 0;
+        }
+        .kw { color: #ff7b72; }
+        .fn { color: #d2a8ff; }
+        .str { color: #a5d6ff; }
+        .cm { color: #8b949e; font-style: italic; }
+        .num { color: #79c0ff; }
+        .type { color: #ffa657; }
+        .dir { color: #ff7b72; }
+        .mac { color: #ffa657; }
+        .table-wrap {
+            overflow-x: auto;
+            margin: 1.25rem 0;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th {
+            background: var(--bg-code);
+            color: var(--accent);
+            font-weight: 600;
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            font-family: var(--font-display);
+            white-space: nowrap;
+        }
+        td {
+            padding: 0.6rem 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) td { background: rgba(13, 17, 23, 0.5); }
+        .diagram-flow {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .diagram-box {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            text-align: center;
+            white-space: nowrap;
+        }
+        .diagram-box.accent { border-color: var(--accent); color: var(--accent); background: rgba(118, 185, 0, 0.08); }
+        .diagram-box.dim { color: var(--text-secondary); border-color: var(--border); }
+        .diagram-arrow { color: var(--accent); font-size: 1.3rem; font-weight: 700; }
+        .diagram-vertical {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .diagram-vertical .diagram-arrow { font-size: 1.1rem; }
+        .hierarchy {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .hierarchy-level { display: flex; align-items: center; gap: 0.75rem; }
+        .hierarchy-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            min-width: 80px;
+            text-align: right;
+        }
+        .hierarchy-items { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+        .hierarchy-item {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        .hierarchy-item.accent { border-color: var(--accent); color: var(--accent); background: rgba(118, 185, 0, 0.08); }
+        .diagram-grid {
+            display: grid;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .diagram-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+        .diagram-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .diagram-panel {
+            padding: 1rem;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+        .diagram-panel.accent-border { border-left: 3px solid var(--accent); }
+        .diagram-panel h4 {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+        .diagram-panel p, .diagram-panel ul { font-size: 0.85rem; }
+        .callout {
+            background: var(--bg-card);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            margin: 1.25rem 0;
+        }
+        .callout p { margin-bottom: 0; }
+        .callout p + p { margin-top: 0.5rem; }
+        .callout .callout-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.3rem;
+        }
+        .contents-list { list-style: none; padding-left: 0; counter-reset: contents; }
+        .contents-list li {
+            counter-increment: contents;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .contents-list li:last-child { border-bottom: none; }
+        .contents-list li::before {
+            content: counter(contents, decimal-leading-zero);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--accent);
+            min-width: 2rem;
+        }
+        .contents-list a { color: var(--text-primary); text-decoration: none; transition: color 0.2s; }
+        .contents-list a:hover { color: var(--accent); }
+        .footer {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+            max-width: var(--max-width);
+            margin: 0 auto;
+        }
+        .footer a { color: var(--accent); text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        .canvas-wrap {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1.25rem 0;
+            overflow-x: auto;
+        }
+        .canvas-wrap canvas, .canvas-wrap svg { display: block; margin: 0 auto; max-width: 100%; }
+        .badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            padding: 0.1rem 0.45rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            vertical-align: middle;
+            margin-left: 0.3rem;
+        }
+        .badge.ok    { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+        .badge.warn  { border-color: #ffa657; color: #ffa657; background: rgba(255,166,87,0.08); }
+        .badge.bad   { border-color: #ff7b72; color: #ff7b72; background: rgba(255,123,114,0.08); }
+        @media (max-width: 640px) {
+            .slide { padding: 3rem 1rem; min-height: auto; }
+            .slide-number { font-size: 3rem; top: 1.5rem; right: 1rem; }
+            .slide h2 { font-size: 1.5rem; }
+            .diagram-grid.cols-2, .diagram-grid.cols-3 { grid-template-columns: 1fr; }
+            .pipeline { gap: 0.15rem; }
+            .pipeline-step { font-size: 0.6rem; padding: 0.2rem 0.4rem; }
+            .hero h1 { font-size: 1.8rem; }
+            table { font-size: 0.78rem; }
+        }
+    </style>
+</head>
+<body>
+<header class="hero">
+    <div class="series-label">Transformer Circuits Thread &mdash; Presentation 03</div>
+    <h1>Toy Models of <span class="accent">Superposition</span></h1>
+    <p class="subtitle">Why a network can pack more features than it has neurons &mdash; and why that is the reason you cannot read a model one neuron at a time.</p>
+    <div class="tags">
+        <span class="tag">Features as Directions</span>
+        <span class="tag">Superposition</span>
+        <span class="tag">Polysemanticity</span>
+        <span class="tag">Sparsity</span>
+        <span class="tag">Phase Transitions</span>
+        <span class="tag">Feature Geometry</span>
+    </div>
+    <div class="pipeline">
+        <span class="pipeline-step">Features = directions</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">More features than dims</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Exploit sparsity</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Superposition</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Polysemantic neurons</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Need dictionary learning</span>
+    </div>
+</header>
+
+<section class="slide" id="slide-00">
+    <div class="slide-number">00</div>
+    <h2>What This Paper Shows</h2>
+    <ul class="contents-list">
+        <li><a href="#slide-01">Features are directions &mdash; mono- vs polysemantic neurons</a></li>
+        <li><a href="#slide-02">The toy model: a sparse autoencoder through a bottleneck</a></li>
+        <li><a href="#slide-03">Superposition &mdash; an over-complete code paid for in interference</a></li>
+        <li><a href="#slide-04">Importance &times; sparsity, and the phase transitions</a></li>
+        <li><a href="#slide-05">The geometry: pairs, triangles, pentagons, tetrahedra</a></li>
+        <li><a href="#slide-06">Connections: adversarial examples and double descent</a></li>
+        <li><a href="#slide-07">What to Take Away</a></li>
+    </ul>
+</section>
+
+<section class="slide" id="slide-01">
+    <div class="slide-number">01</div>
+    <h2>Features Are Directions in Activation Space</h2>
+    <p style="font-family:var(--font-mono);font-size:0.85rem;">Elhage, Hume, Olsson, Schiefer, Henighan, Kravec, Hatfield-Dodds et al. &mdash; Anthropic &mdash; September 2022 <span class="badge ok">Transformer Circuits</span> <span class="badge">transformer-circuits.pub</span></p>
+    <h3>The starting hypothesis</h3>
+    <p>The paper builds on the <strong>linear representation hypothesis</strong>: the things a network &ldquo;knows about&rdquo; &mdash; its <em>features</em> &mdash; correspond to <strong>directions in activation space</strong>. A feature is present when activations point along its direction, and the strength of activation along that direction is the feature's value. Composition of features is then just vector addition.</p>
+    <p>If that picture held perfectly, interpretability would be easy: read each neuron, name its feature, done. The trouble is that real neurons rarely line up with single features.</p>
+    <h3>Monosemantic vs polysemantic</h3>
+    <ul>
+        <li>A neuron is <strong>monosemantic</strong> if it represents exactly one feature &mdash; its activation has a single, clean meaning.</li>
+        <li>A neuron is <strong>polysemantic</strong> if it fires for several unrelated features &mdash; e.g. one unit that responds to cat faces, the fronts of cars, <em>and</em> cat legs. Polysemantic neurons are everywhere in real networks, and they are why you cannot interpret a model neuron-by-neuron.</li>
+    </ul>
+    <p>The paper's central claim is that polysemanticity is not noise or sloppiness &mdash; it is the visible symptom of a deliberate, learnable strategy called <strong>superposition</strong>. The toy models exist to reproduce that strategy in a setting small enough to fully understand.</p>
+    <div class="callout">
+        <div class="callout-label">The insight</div>
+        <p>&ldquo;What is a neuron?&rdquo; is the wrong unit of analysis. The right unit is the <strong>feature direction</strong> &mdash; and features need not be axis-aligned with neurons. A single neuron can be a messy linear combination of many features at once.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-02">
+    <div class="slide-number">02</div>
+    <h2>The Toy Model: A Sparse Autoencoder Through a Bottleneck</h2>
+    <h3>The setup</h3>
+    <p>Take <code>n</code> synthetic features, each a sparse, non-negative scalar, and force them through a bottleneck of only <code>m &lt; n</code> dimensions, then ask the network to reconstruct them. The model is deliberately tiny:</p>
+    <div class="code-block">
+        <div class="code-header">toy_model — linear down-projection, ReLU reconstruction</div>
+<pre><code><span class="cm"># x : n sparse, non-negative input features  (n &gt; m)</span>
+h  = W @ x                 <span class="cm"># down-project into m-dim bottleneck</span>
+x' = <span class="fn">ReLU</span>(Wᵀ @ h + b)       <span class="cm"># tied weights, reconstruct n features</span>
+
+<span class="cm"># weighted reconstruction loss — I_i is each feature's importance</span>
+L  = Σ_i  I_i · (x_i − x'_i)²</code></pre>
+    </div>
+    <p>Two design choices do all the work. The decoder reuses the encoder weights (<strong>tied weights</strong>, <code>W&#x1D40;</code>), so the only learned parameters are the <code>m&times;n</code> matrix <code>W</code> and a bias. And the reconstruction passes through a <strong>ReLU</strong>, whose non-negativity is exactly what lets the model clean up small interference between overlapping features.</p>
+    <h3>Reading W&#x1D40;W</h3>
+    <p>Each feature <code>i</code> is represented by its column of <code>W</code> &mdash; a vector in the <code>m</code>-dimensional bottleneck. The Gram matrix <strong><code>W&#x1D40;W</code></strong> is the key diagnostic:</p>
+    <ul>
+        <li>A diagonal entry <code>(W&#x1D40;W)<sub>ii</sub> = &#x2016;W<sub>i</sub>&#x2016;&sup2;</code> tells you how much &ldquo;dimension&rdquo; feature <code>i</code> gets. Zero means it was dropped; one means it owns a clean direction.</li>
+        <li>Off-diagonal entries <code>(W&#x1D40;W)<sub>ij</sub> = W<sub>i</sub>&middot;W<sub>j</sub></code> are the <strong>interference</strong> between features <code>i</code> and <code>j</code>. Orthogonal features have zero overlap; superposed features have small non-zero overlap.</li>
+    </ul>
+    <p>So <code>W&#x1D40;W</code> directly visualises which features got a dedicated dimension and which are sharing space.</p>
+    <div class="callout">
+        <div class="callout-label">The mechanism</div>
+        <p>The whole phenomenon reduces to one trade-off the loss must resolve: <strong>represent more features (less reconstruction error) vs. keep them orthogonal (less interference)</strong>. ReLU + sparsity is what tips that trade-off toward packing extra features in.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-03">
+    <div class="slide-number">03</div>
+    <h2>Superposition: An Over-Complete Code Paid for in Interference</h2>
+    <h3>The problem</h3>
+    <p>You cannot fit <code>n</code> mutually orthogonal directions into <code>m &lt; n</code> dimensions &mdash; there is only room for <code>m</code> of them. Naively, the network must throw away <code>n &minus; m</code> features. But it doesn't have to.</p>
+    <h3>The contribution</h3>
+    <p>In high dimensions there are <em>many</em> vectors that are <strong>nearly</strong> orthogonal &mdash; almost perpendicular, with only small dot products. The network exploits this: it assigns the extra features near-orthogonal directions and <strong>tolerates a little interference</strong>. The result is <strong>superposition</strong> &mdash; representing more features than dimensions by accepting controlled cross-talk.</p>
+    <p>This only works because of <strong>feature sparsity</strong>: most features are zero on most inputs. If two superposed features almost never fire together, their interference almost never matters, and ReLU thresholds away the small residual noise on the rare collisions. Superposition is effectively a learned <strong>compressed code</strong> &mdash; the same principle as <strong>compressed sensing / sparse coding</strong>, where a sparse high-dimensional signal can be recovered from far fewer measurements.</p>
+    <div class="canvas-wrap">
+        <svg viewBox="0 0 720 300" width="720" height="300" xmlns="http://www.w3.org/2000/svg">
+            <style>
+                .sp-ttl { fill: #76B900; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 12px; }
+                .sp-lbl { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; }
+                .sp-vec { stroke: #76B900; stroke-width: 2; fill: none; marker-end: url(#sph); }
+                .sp-vecd { stroke: #8b949e; stroke-width: 1.5; fill: none; marker-end: url(#sphd); }
+                .sp-axis { stroke: #21262d; stroke-width: 1; }
+            </style>
+            <defs>
+                <marker id="sph" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#76B900"/></marker>
+                <marker id="sphd" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#8b949e"/></marker>
+            </defs>
+            <text x="10" y="18" class="sp-ttl">m = 2 dimensions, n = 5 features &mdash; a near-orthogonal pentagon</text>
+            <!-- left: orthogonal, only 2 fit -->
+            <text x="175" y="44" class="sp-lbl">No superposition: only m=2 fit, 3 dropped</text>
+            <line x1="60" y1="180" x2="290" y2="180" class="sp-axis"/>
+            <line x1="175" y1="70" x2="175" y2="270" class="sp-axis"/>
+            <path d="M175 180 L285 180" class="sp-vec"/>
+            <path d="M175 180 L175 80" class="sp-vec"/>
+            <text x="270" y="200" class="sp-lbl">f1</text>
+            <text x="195" y="86" class="sp-lbl">f2</text>
+            <text x="120" y="250" class="sp-lbl">f3,f4,f5 = 0</text>
+            <!-- right: pentagon, 5 fit -->
+            <text x="545" y="44" class="sp-lbl">Superposition: 5 near-orthogonal directions</text>
+            <line x1="430" y1="180" x2="660" y2="180" class="sp-axis"/>
+            <line x1="545" y1="70" x2="545" y2="270" class="sp-axis"/>
+            <!-- 5 vectors at 72-deg spacing -->
+            <path d="M545 180 L545 85" class="sp-vec"/>
+            <path d="M545 180 L635 149" class="sp-vec"/>
+            <path d="M545 180 L601 252" class="sp-vec"/>
+            <path d="M545 180 L489 252" class="sp-vec"/>
+            <path d="M545 180 L455 149" class="sp-vec"/>
+            <text x="545" y="78" class="sp-lbl">f1</text>
+            <text x="650" y="148" class="sp-lbl">f2</text>
+            <text x="612" y="268" class="sp-lbl">f3</text>
+            <text x="478" y="268" class="sp-lbl">f4</text>
+            <text x="440" y="148" class="sp-lbl">f5</text>
+            <text x="545" y="292" class="sp-lbl">small overlaps = interference, tolerated because features are sparse</text>
+        </svg>
+    </div>
+    <div class="callout">
+        <div class="callout-label">The insight</div>
+        <p>Superposition makes the network an <strong>over-complete, lossy compression scheme</strong>. The price &mdash; a little interference noise &mdash; is cheap precisely when features are sparse, so a sparse world buys you far more representational capacity than you have neurons.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-04">
+    <div class="slide-number">04</div>
+    <h2>Two Forces: Importance &times; Sparsity, and the Phase Transitions</h2>
+    <h3>The two knobs</h3>
+    <p>Whether a feature gets a clean dimension or is shoved into superposition is decided by two quantities the experiments sweep:</p>
+    <ul>
+        <li><strong>Importance</strong> (<code>I<sub>i</sub></code>): how much that feature reduces the loss &mdash; its weight in the reconstruction objective.</li>
+        <li><strong>Sparsity</strong> (<code>1 &minus; S</code>, where <code>S</code> is the probability a feature is active): how often the feature is non-zero. Sparser features collide less often, so their interference costs less.</li>
+    </ul>
+    <h3>The phase transition</h3>
+    <p>Sweep sparsity and the model snaps between regimes rather than sliding smoothly &mdash; there are sharp <strong>phase transitions</strong>:</p>
+    <div class="canvas-wrap">
+        <svg viewBox="0 0 720 250" width="720" height="250" xmlns="http://www.w3.org/2000/svg">
+            <style>
+                .ph-ttl { fill: #76B900; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 12px; }
+                .ph-lbl { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+                .ph-ax  { stroke: #21262d; stroke-width: 1; }
+                .ph-box { fill: #161b22; stroke: #21262d; stroke-width: 1; }
+                .ph-acc { fill: rgba(118,185,0,0.10); stroke: #76B900; stroke-width: 1; }
+                .ph-line{ stroke: #76B900; stroke-width: 2.5; fill: none; }
+                .ph-tick{ fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; }
+            </style>
+            <text x="10" y="18" class="ph-ttl">Increasing sparsity (&rarr;) drives the model from monosemantic into superposition</text>
+            <line x1="70" y1="200" x2="690" y2="200" class="ph-ax"/>
+            <text x="300" y="232" class="ph-lbl">feature sparsity (probability a feature is zero) &rarr;</text>
+            <!-- monosemantic region -->
+            <rect x="70" y="60" width="200" height="140" class="ph-box"/>
+            <text x="90" y="84" class="ph-lbl">DENSE / low sparsity</text>
+            <text x="90" y="104" class="ph-lbl">monosemantic regime</text>
+            <text x="90" y="124" class="ph-lbl">1 feature per dimension</text>
+            <text x="90" y="144" class="ph-lbl">only m features kept</text>
+            <text x="90" y="164" class="ph-lbl">no superposition</text>
+            <!-- transition marker -->
+            <line x1="290" y1="55" x2="290" y2="205" stroke="#ffa657" stroke-width="1.5" stroke-dasharray="4 3"/>
+            <text x="300" y="50" fill="#ffa657" font-family="JetBrains Mono, monospace" font-size="10px">sharp phase transition</text>
+            <!-- superposition region -->
+            <rect x="310" y="60" width="380" height="140" class="ph-acc"/>
+            <text x="330" y="84" class="ph-lbl" fill="#76B900">SPARSE / high sparsity</text>
+            <text x="330" y="104" class="ph-lbl" fill="#76B900">superposition regime</text>
+            <text x="330" y="124" class="ph-lbl" fill="#76B900">&gt;1 feature per dimension</text>
+            <text x="330" y="144" class="ph-lbl" fill="#76B900">extra features packed in near-orthogonally</text>
+            <text x="330" y="164" class="ph-lbl" fill="#76B900">interference tolerated</text>
+            <!-- features-represented step curve -->
+            <path d="M80 185 L285 185 L295 120 L500 110 L690 95" class="ph-line"/>
+            <text x="540" y="92" class="ph-lbl" fill="#76B900"># features represented</text>
+        </svg>
+    </div>
+    <p>At low sparsity the model is <strong>monosemantic</strong>: it keeps the <code>m</code> most important features, one per dimension, and discards the rest. As sparsity rises past a threshold it abruptly switches to <strong>superposition</strong>, cramming in extra features. Importance breaks ties &mdash; the most important features get clean dedicated directions; less important ones are the ones forced to share.</p>
+    <div class="callout">
+        <div class="callout-label">The mechanism</div>
+        <p>Sparsity is the control knob for interpretability. The sparser a model's features &mdash; and real language features are <em>extremely</em> sparse &mdash; the more aggressively the network uses superposition, and the more polysemantic and unreadable its neurons become.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-05">
+    <div class="slide-number">05</div>
+    <h2>The Geometry of Superposition</h2>
+    <h3>The surprise</h3>
+    <p>When the network does pack features in, it does not scatter them randomly. The feature directions snap into <strong>clean geometric arrangements</strong> that minimise interference &mdash; structures drawn from <strong>uniform polytopes</strong>. As sparsity increases, the model marches through a sequence of these shapes:</p>
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel accent-border">
+            <h4>Antipodal pair / digon</h4>
+            <p>Two features sharing one dimension as <strong>opposite directions</strong> (180&deg; apart). Two features in the space of one &mdash; <code>1/2</code> dimension per feature.</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Triangle</h4>
+            <p>Three features at 120&deg; in a 2D plane. Each direction is as far from the others as possible given the count.</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Pentagon</h4>
+            <p>Five features packed into a 2D plane at 72&deg; spacing &mdash; an over-complete code in just two dimensions.</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Tetrahedron</h4>
+            <p>Four features as the vertices of a regular tetrahedron in 3D &mdash; maximally spread directions in a 3-dimensional bottleneck.</p>
+        </div>
+    </div>
+    <h3>Fractional dimensions and tegum products</h3>
+    <p>Because several features can share a dimension, the natural accounting is <strong>fractional dimensions per feature</strong> &mdash; an antipodal pair is <code>1/2</code>, and other configurations give characteristic fractions such as <code>2/3</code> or <code>4/7</code>. Higher-dimensional solutions are built as <strong>tegum products</strong> (direct sums of independent lower-dimensional polytopes), and the configurations are <strong>&ldquo;sticky&rdquo;</strong>: they sit in energy-minimising wells, so the model resists leaving a stable arrangement until sparsity changes enough to favour the next one.</p>
+    <div class="diagram-flow">
+        <div class="diagram-box dim">antipodal pair<br><small>1/2 dim/feat</small></div>
+        <div class="diagram-arrow">&rarr;</div>
+        <div class="diagram-box">triangle</div>
+        <div class="diagram-arrow">&rarr;</div>
+        <div class="diagram-box accent">pentagon</div>
+        <div class="diagram-arrow">&rarr;</div>
+        <div class="diagram-box accent">tetrahedron<br><small>3D</small></div>
+        <div class="diagram-arrow">&rarr;</div>
+        <div class="diagram-box dim">tegum products<br><small>higher-dim</small></div>
+    </div>
+    <div class="callout">
+        <div class="callout-label">The insight</div>
+        <p>Superposition has a <strong>crystalline structure</strong>, not a chaotic one. The same packing problems that produce regular polytopes in geometry show up inside trained networks &mdash; which is encouraging: a structured phenomenon is a tractable one to reverse-engineer.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-06">
+    <div class="slide-number">06</div>
+    <h2>Connections: Adversarial Examples and Double Descent</h2>
+    <h3>Why interpretability is hard &mdash; restated</h3>
+    <p>Superposition is the <strong>mechanistic root cause of polysemanticity</strong>. Because neurons carry many features along non-axis-aligned directions, reading a network neuron-by-neuron is fundamentally lossy. The features are there &mdash; just not on the basis you are looking at.</p>
+    <h3>Adversarial examples</h3>
+    <p>The same near-orthogonal packing that makes superposition efficient also makes it <strong>fragile</strong>. Small, carefully chosen input perturbations can push activations along an unintended feature direction, exploiting the interference between superposed features. The paper draws a direct line from superposition geometry to the existence of adversarial examples.</p>
+    <h3>Double descent and memorisation</h3>
+    <p>The toy model exhibits its own version of <strong>double descent</strong>, and ties it to a regime distinction: networks can either <strong>memorise individual data points</strong> or <strong>learn generalising features</strong>, and these correspond to different ways of using the available dimensions. Superposition links the study of memorisation to the study of features &mdash; the same packing machinery underlies both.</p>
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel accent-border">
+            <h4>Memorisation regime</h4>
+            <p>Dimensions are spent storing specific <strong>data points</strong>. Good fit to the training set, weak generalisation.</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Feature-learning regime</h4>
+            <p>Dimensions are spent on reusable <strong>features</strong> held in superposition. This is the regime interpretability cares about.</p>
+        </div>
+    </div>
+    <div class="callout">
+        <div class="callout-label">Why it matters</div>
+        <p>Superposition is not an isolated curiosity &mdash; it sits at the intersection of interpretability, robustness, and generalisation. Understanding it gives you one lever on three problems at once.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-07">
+    <div class="slide-number">07</div>
+    <h2>What to Take Away</h2>
+    <ul>
+        <li><strong>Features are directions, not neurons.</strong> The unit of meaning is a direction in activation space; neurons are just the axes you happen to read out, and they rarely align with single features.</li>
+        <li><strong>Superposition packs more features than dimensions.</strong> Using near-orthogonal directions and tolerating small interference, a model represents <code>n &gt; m</code> features &mdash; an over-complete code, the same idea as compressed sensing.</li>
+        <li><strong>Sparsity is what makes it pay.</strong> Because features are zero most of the time, collisions are rare and interference is cheap &mdash; so sparser worlds buy more superposition.</li>
+        <li><strong>Importance and sparsity drive sharp phase transitions.</strong> The model jumps between a monosemantic regime (one feature per dimension) and a superposition regime, and feature directions crystallise into uniform polytopes &mdash; pairs, triangles, pentagons, tetrahedra &mdash; with fractional dimensions per feature.</li>
+        <li><strong>Superposition explains polysemantic neurons.</strong> That is precisely why you cannot interpret a frontier model one neuron at a time, and it links interpretability to adversarial fragility and to double descent.</li>
+        <li><strong>It motivates dictionary learning.</strong> If features live in superposition on a non-neuron basis, the way to recover them is to <em>learn the right basis</em> &mdash; an over-complete, sparse one &mdash; which is exactly what sparse autoencoders do.</li>
+    </ul>
+    <div class="callout">
+        <div class="callout-label">Where to next</div>
+        <p>If superposition hides the real features on a basis we cannot read directly, can we train a second model to <em>decompress</em> them &mdash; to map a layer's activations onto a large, sparse dictionary of monosemantic features? <strong>Presentation 04 &mdash; Towards Monosemanticity</strong> does exactly this, using sparse autoencoders to pull genuinely interpretable features back out of a real transformer's superposition.</p>
+    </div>
+</section>
+
+<footer class="footer">
+    <p>Part of <a href="https://github.com/BrendanJamesLynskey/LLM_Hub_Transformer_Circuits">The Transformer Circuits Thread series</a> &mdash; Anthropic's mechanistic interpretability research, for engineers.</p>
+    <p style="margin-top:0.5rem;font-size:0.8rem;"><a href="https://github.com/BrendanJamesLynskey/LLM_Hub_Transformer_Circuits">Back to Series Index</a></p>
+</footer>
+<script>
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.slide').forEach(slide => {
+        slide.style.opacity = '0';
+        slide.style.transform = 'translateY(30px)';
+        slide.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(slide);
+    });
+</script>
+</body>
+</html>
