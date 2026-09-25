@@ -6,7 +6,7 @@
     <title>Circuits 03 — Toy Models of Superposition</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&family=Karla:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,700&family=Fragment+Mono:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-primary: #1f1622;
@@ -18,9 +18,9 @@
             --accent-dim: #98b47e44;
             --accent-glow: #98b47e33;
             --border: #3e3042;
-            --font-display: 'Space Grotesk', sans-serif;
-            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-            --font-body: 'Inter', sans-serif;
+            --font-display: 'Bodoni Moda', sans-serif;
+            --font-mono: 'Fragment Mono', 'Fragment Mono', monospace;
+            --font-body: 'Karla', sans-serif;
             --max-width: 900px;
         }
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -397,6 +397,7 @@
             table { font-size: 0.78rem; }
         }
     </style>
+<style>:root{font-synthesis-weight:none}</style>
 </head>
 <body>
 <header class="hero">
@@ -498,8 +499,8 @@ L  = Σ_i  I_i · (x_i − x'_i)²</code></pre>
     <div class="canvas-wrap">
         <svg viewBox="0 0 720 300" width="720" height="300" xmlns="http://www.w3.org/2000/svg">
             <style>
-                .sp-ttl { fill: #98b47e; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 12px; }
-                .sp-lbl { fill: #aa9ba9; font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; }
+                .sp-ttl { fill: #98b47e; font-family: 'Bodoni Moda', sans-serif; font-weight: 600; font-size: 12px; }
+                .sp-lbl { fill: #aa9ba9; font-family: 'Fragment Mono', monospace; font-size: 10px; text-anchor: middle; }
                 .sp-vec { stroke: #98b47e; stroke-width: 2; fill: none; marker-end: url(#sph); }
                 .sp-vecd { stroke: #aa9ba9; stroke-width: 1.5; fill: none; marker-end: url(#sphd); }
                 .sp-axis { stroke: #3e3042; stroke-width: 1; }
@@ -556,13 +557,13 @@ L  = Σ_i  I_i · (x_i − x'_i)²</code></pre>
     <div class="canvas-wrap">
         <svg viewBox="0 0 720 250" width="720" height="250" xmlns="http://www.w3.org/2000/svg">
             <style>
-                .ph-ttl { fill: #98b47e; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 12px; }
-                .ph-lbl { fill: #aa9ba9; font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+                .ph-ttl { fill: #98b47e; font-family: 'Bodoni Moda', sans-serif; font-weight: 600; font-size: 12px; }
+                .ph-lbl { fill: #aa9ba9; font-family: 'Fragment Mono', monospace; font-size: 10px; }
                 .ph-ax  { stroke: #3e3042; stroke-width: 1; }
                 .ph-box { fill: #2e2231; stroke: #3e3042; stroke-width: 1; }
                 .ph-acc { fill: rgba(152,180,126,0.10); stroke: #98b47e; stroke-width: 1; }
                 .ph-line{ stroke: #98b47e; stroke-width: 2.5; fill: none; }
-                .ph-tick{ fill: #f2ebe7; font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; }
+                .ph-tick{ fill: #f2ebe7; font-family: 'Fragment Mono', monospace; font-size: 10px; text-anchor: middle; }
             </style>
             <text x="10" y="18" class="ph-ttl">Increasing sparsity (&rarr;) drives the model from monosemantic into superposition</text>
             <line x1="70" y1="200" x2="690" y2="200" class="ph-ax"/>
@@ -576,7 +577,7 @@ L  = Σ_i  I_i · (x_i − x'_i)²</code></pre>
             <text x="90" y="164" class="ph-lbl">no superposition</text>
             <!-- transition marker -->
             <line x1="290" y1="55" x2="290" y2="205" stroke="#dfb774" stroke-width="1.5" stroke-dasharray="4 3"/>
-            <text x="300" y="50" fill="#dfb774" font-family="JetBrains Mono, monospace" font-size="10px">sharp phase transition</text>
+            <text x="300" y="50" fill="#dfb774" font-family="Fragment Mono, monospace" font-size="10px">sharp phase transition</text>
             <!-- superposition region -->
             <rect x="310" y="60" width="380" height="140" class="ph-acc"/>
             <text x="330" y="84" class="ph-lbl" fill="#98b47e">SPARSE / high sparsity</text>
